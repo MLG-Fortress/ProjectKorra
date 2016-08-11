@@ -3,6 +3,7 @@ package com.projectkorra.projectkorra.firebending;
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.ProjectKorra;
 import com.projectkorra.projectkorra.ability.AirAbility;
+import com.projectkorra.projectkorra.ability.EarthAbility;
 import com.projectkorra.projectkorra.ability.FireAbility;
 import com.projectkorra.projectkorra.ability.WaterAbility;
 import com.projectkorra.projectkorra.avatar.AvatarState;
@@ -33,7 +34,8 @@ public class FireBlast extends FireAbility {
 	private boolean powerFurnace;
 	private boolean showParticles;
 	private boolean dissipate;
-	private boolean isFireBurst;
+	private boolean isFireBurst = false;
+	private boolean fireBurstIgnite;
 	private int ticks;
 	private long cooldown;
 	private double speedFactor;
@@ -96,6 +98,7 @@ public class FireBlast extends FireAbility {
 		this.isFireBurst = true;
 		this.powerFurnace = true;
 		this.showParticles = true;
+		this.fireBurstIgnite = getConfig().getBoolean("Abilities.Fire.FireBurst.Ignite");
 		this.dissipate = getConfig().getBoolean("Abilities.Fire.FireBlast.Dissipate");
 		this.cooldown = getConfig().getLong("Abilities.Fire.FireBlast.Cooldown");
 		this.range = getConfig().getDouble("Abilities.Fire.FireBlast.Range");
@@ -126,7 +129,7 @@ public class FireBlast extends FireAbility {
 			}
 			if (entity instanceof LivingEntity) {
 				entity.setFireTicks((int) (fireTicks * 20));
-				DamageHandler.damageEntity(entity, (int) getDayFactor(damage), this);
+				DamageHandler.damageEntity(entity, damage, this);
 				AirAbility.breakBreathbendingHold(entity);
 				new FireDamageTimer(entity, player);
 				remove();
@@ -140,7 +143,7 @@ public class FireBlast extends FireAbility {
 					&& !safeBlocks.contains(block)
 					&& !GeneralMethods.isRegionProtectedFromBuild(this, block.getLocation())) {
 				if (canFireGrief()) {
-					if (WaterAbility.isPlantbendable(player, block.getType(), false)) {
+					if (isPlant(block) || isSnow(block)) {
 						new PlantRegrowth(player, block);
 					}
 					block.setType(Material.FIRE);
@@ -180,7 +183,9 @@ public class FireBlast extends FireAbility {
 				furnace.setCookTime((short) 800);
 				furnace.update();
 			} else if (BlazeArc.isIgnitable(player, block.getRelative(BlockFace.UP))) {
-				ignite(location);
+				if((isFireBurst && fireBurstIgnite) || !isFireBurst) {
+					ignite(location);
+				}
 			}
 			remove();
 			return;
@@ -193,6 +198,7 @@ public class FireBlast extends FireAbility {
 
 		WaterAbility.removeWaterSpouts(location, player);
 		AirAbility.removeAirSpouts(location, player);
+		EarthAbility.removeSandSpouts(location, player);
 
 		Player source = player;
 		if (EarthBlast.annihilateBlasts(location, collisionRadius, source) 

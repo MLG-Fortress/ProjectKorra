@@ -14,6 +14,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AirBubble extends AirAbility {
@@ -22,7 +23,7 @@ public class AirBubble extends AirAbility {
 	private double radius;
 	private double airRadius;
 	private double waterRadius;
-	private ConcurrentHashMap<Block, BlockState> waterOrigins;
+	private Map<Block, BlockState> waterOrigins;
 
 	public AirBubble(Player player) {
 		super(player);
@@ -131,6 +132,8 @@ public class AirBubble extends AirAbility {
 				}
 			}
 		}
+		
+		WaterAbility.removeWaterSpouts(location, radius, player);
 	}
 
 	@Override
@@ -200,7 +203,7 @@ public class AirBubble extends AirAbility {
 		this.waterRadius = waterRadius;
 	}
 
-	public ConcurrentHashMap<Block, BlockState> getWaterOrigins() {
+	public Map<Block, BlockState> getWaterOrigins() {
 		return waterOrigins;
 	}
 

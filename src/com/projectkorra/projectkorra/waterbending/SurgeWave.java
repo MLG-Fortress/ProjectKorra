@@ -204,7 +204,7 @@ public class SurgeWave extends WaterAbility {
 				targetDirection = getDirection(sourceBlock.getLocation(), targetDestination).normalize();
 				targetDestination = location.clone().add(targetDirection.clone().multiply(range));
 				
-				if (isPlant(sourceBlock)) {
+				if (isPlant(sourceBlock) || isSnow(sourceBlock)) {
 					new PlantRegrowth(player, sourceBlock);
 				}
 				if (!GeneralMethods.isAdjacentToThreeOrMoreSources(sourceBlock)) {
@@ -356,7 +356,9 @@ public class SurgeWave extends WaterAbility {
 
 	public void returnWater()  {
 		if (location != null) {
+			if (player.isOnline()) {
 			new WaterReturn(player, location.getBlock());
+		}
 		}
 	}
 

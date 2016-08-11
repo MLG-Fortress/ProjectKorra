@@ -2,6 +2,8 @@ package com.projectkorra.projectkorra.earthbending;
 
 import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.ability.EarthAbility;
+import com.projectkorra.projectkorra.configuration.ConfigManager;
+import com.projectkorra.projectkorra.util.TempBlock;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -10,6 +12,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EarthTunnel extends EarthAbility {
 	
@@ -21,11 +25,14 @@ public class EarthTunnel extends EarthAbility {
 	private double maxRadius;
 	private double range;
 	private double radiusIncrement;
+	private boolean revert;
 	private Block block;
 	private Location origin;
 	private Location location;
 	private Vector direction;
 
+	public static Map<TempBlock, Long> airBlocks = new ConcurrentHashMap<TempBlock, Long>();
+	
 	public EarthTunnel(Player player) {
 		super(player);
 		
@@ -33,6 +40,7 @@ public class EarthTunnel extends EarthAbility {
 		this.range = getConfig().getDouble("Abilities.Earth.EarthTunnel.Range");
 		this.radius = getConfig().getDouble("Abilities.Earth.EarthTunnel.Radius");
 		this.interval = getConfig().getLong("Abilities.Earth.EarthTunnel.Interval");
+		this.revert = getConfig().getBoolean("Abilities.Earth.EarthTunnel.Revert");
 		this.radiusIncrement = radius;
 		this.time = System.currentTimeMillis();
 		
@@ -90,8 +98,8 @@ public class EarthTunnel extends EarthAbility {
 					block = location.clone().add(direction.clone().normalize().multiply(depth)).add(vec).getBlock();
 				}
 
-				if (isEarthRevertOn()) {
-					addTempAirBlock(block);
+				if (this.revert) {
+					airBlocks.put(new TempBlock(block, Material.AIR, (byte) 0), System.currentTimeMillis());
 				} else {
 					block.breakNaturally();
 				}
@@ -215,6 +223,17 @@ public class EarthTunnel extends EarthAbility {
 
 	public void setLocation(Location location) {
 		this.location = location;
+	}
+	
+	public static void revertAirBlocks() {
+		if (ConfigManager.defaultConfig.get().getBoolean("Abilities.Earth.EarthTunnel.Revert")) {
+			for (TempBlock tempBlock : EarthTunnel.airBlocks.keySet()) {
+				if (EarthTunnel.airBlocks.get(tempBlock) + ConfigManager.defaultConfig.get().getLong("Properties.Earth.RevertCheckTime") <= System.currentTimeMillis()) {
+					tempBlock.revertBlock();
+					EarthTunnel.airBlocks.remove(tempBlock);
+				}
+			}
+		}
 	}
 	
 }

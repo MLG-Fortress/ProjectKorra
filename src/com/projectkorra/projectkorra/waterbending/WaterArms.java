@@ -22,6 +22,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WaterArms extends WaterAbility {
@@ -33,7 +34,7 @@ public class WaterArms extends WaterAbility {
 		RIGHT, LEFT;
 	}
 
-	private static final ConcurrentHashMap<Block, Long> BLOCK_REVERT_TIMES = new ConcurrentHashMap<Block, Long>();
+	private static final Map<Block, Long> BLOCK_REVERT_TIMES = new ConcurrentHashMap<Block, Long>();
 	private static final Integer[] UNBREAKABLES = { 7, 8, 9, 10, 11, 49, 54, 90, 119, 120, 130, 146 };
 
 	private boolean cooldownLeft;
@@ -146,10 +147,12 @@ public class WaterArms extends WaterAbility {
 	private boolean prepare() {
 		Block sourceBlock = getWaterSourceBlock(player, sourceGrabRange, canUsePlantSource);
 		if (sourceBlock != null) {
-			if (isPlant(sourceBlock)) {
+			if (isPlant(sourceBlock) || isSnow(sourceBlock)) {
 				fullSource = false;
 			}
 			ParticleEffect.LARGE_SMOKE.display(getWaterSourceBlock(player, sourceGrabRange, canUsePlantSource).getLocation().clone().add(0.5, 0.5, 0.5), 0, 0, 0, 0F, 4);
+			new PlantRegrowth(player, sourceBlock);
+			sourceBlock.setType(Material.AIR);
 			return true;
 		} else if (WaterReturn.hasWaterBottle(player)) {
 			WaterReturn.emptyWaterBottle(player);
@@ -341,6 +344,16 @@ public class WaterArms extends WaterAbility {
 				BLOCK_REVERT_TIMES.remove(block);
 			}
 		}
+		
+		for (Block block : WaterArmsSpear.getIceBlocks().keySet()) {
+			long time = WaterArmsSpear.getIceBlocks().get(block);
+			if (System.currentTimeMillis() > time || ignoreTime) {
+				if (TempBlock.isTempBlock(block)) {
+					TempBlock.revertBlock(block, Material.AIR);
+				}
+				WaterArmsSpear.getIceBlocks().remove(block);
+			}
+		}
 	}
 
 	private void checkIfZapped() {
@@ -407,6 +420,7 @@ public class WaterArms extends WaterAbility {
 	public static void removeAllCleanup() {
 		progressRevert(true);
 		BLOCK_REVERT_TIMES.clear();
+		WaterArmsSpear.getIceBlocks().clear();
 		WaterArmsWhip.removeAllCleanup();
 	}
 
@@ -709,7 +723,7 @@ public class WaterArms extends WaterAbility {
 		this.sneakMsg = sneakMsg;
 	}
 
-	public static ConcurrentHashMap<Block, Long> getBlockRevertTimes() {
+	public static Map<Block, Long> getBlockRevertTimes() {
 		return BLOCK_REVERT_TIMES;
 	}
 

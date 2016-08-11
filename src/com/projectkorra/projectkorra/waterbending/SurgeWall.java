@@ -173,7 +173,7 @@ public class SurgeWall extends WaterAbility {
 				firstDirection = getDirection(sourceBlock.getLocation(), firstDestination);
 				targetDirection = getDirection(firstDestination, targetDestination);
 				
-				if (isPlant(sourceBlock)) {
+				if (isPlant(sourceBlock) || isSnow(sourceBlock)) {
 					new PlantRegrowth(player, sourceBlock);
 				}
 				if (!GeneralMethods.isAdjacentToThreeOrMoreSources(sourceBlock)) {
@@ -252,7 +252,7 @@ public class SurgeWall extends WaterAbility {
 						} else if (!blocks.contains(block) 
 								&& (block.getType() == Material.AIR 
 									|| block.getType() == Material.FIRE 
-									|| isWaterbendable(block))) {
+									|| isWaterbendable(block)) && isTransparent(block)) {
 							WALL_BLOCKS.put(block, player);
 							addWallBlock(block);
 							blocks.add(block);

@@ -3,6 +3,7 @@ package com.projectkorra.projectkorra;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,7 +41,7 @@ public class BendingPlayer {
 	/**
 	 * ConcurrentHashMap that contains all instances of BendingPlayer, with UUID key.
 	 */
-	private static final ConcurrentHashMap<UUID, BendingPlayer> PLAYERS = new ConcurrentHashMap<>();
+	private static final Map<UUID, BendingPlayer> PLAYERS = new ConcurrentHashMap<>();
 
 	private boolean permaRemoved;
 	private boolean toggled;
@@ -54,8 +55,8 @@ public class BendingPlayer {
 	private ArrayList<Element> elements;
 	private ArrayList<SubElement> subelements;
 	private HashMap<Integer, String> abilities;
-	private ConcurrentHashMap<String, Long> cooldowns;
-	private ConcurrentHashMap<Element, Boolean> toggledElements;	
+	private Map<String, Long> cooldowns;
+	private Map<Element, Boolean> toggledElements;	
 
 	/**
 	 * Creates a new {@link BendingPlayer}.
@@ -109,6 +110,15 @@ public class BendingPlayer {
 		Bukkit.getServer().getPluginManager().callEvent(event);
 		if (!event.isCancelled()) {
 			this.cooldowns.put(ability, cooldown + System.currentTimeMillis());
+			
+			Player player = event.getPlayer();
+			int slot = player.getInventory().getHeldItemSlot() + 1;
+			String abilityName = event.getAbility();
+			BendingPlayer bPlayer = BendingPlayer.getBendingPlayer(player);
+
+			if (bPlayer.getBoundAbility()!= null && bPlayer.getBoundAbility().equals(CoreAbility.getAbility(abilityName))) {
+				GeneralMethods.displayMovePreview(player, CoreAbility.getAbility(bPlayer.getAbilities().get(slot)));
+			}
 		}
 	}
 
@@ -169,6 +179,8 @@ public class BendingPlayer {
 		Location playerLoc = player.getLocation();
 		
 		if (!player.isOnline() || player.isDead()) {
+			return false;
+		} else if (!canBind(ability)) {
 			return false;
 		} else if (ability.getPlayer() != null && ability.getLocation() != null && !ability.getLocation().getWorld().equals(player.getWorld())) {
 			return false;
@@ -248,7 +260,7 @@ public class BendingPlayer {
 	}
 
 	public boolean canBind(CoreAbility ability) {
-		if (ability == null || !player.isOnline()) {
+		if (ability == null || !player.isOnline() || !ability.isEnabled()) {
 			return false;
 		} else if (!player.hasPermission("bending.ability." + ability.getName())) {
 			return false;
@@ -423,7 +435,7 @@ public class BendingPlayer {
 	 * 
 	 * @return map of cooldowns
 	 */
-	public ConcurrentHashMap<String, Long> getCooldowns() {
+	public Map<String, Long> getCooldowns() {
 		return cooldowns;
 	}
 
@@ -612,6 +624,15 @@ public class BendingPlayer {
 		Bukkit.getServer().getPluginManager().callEvent(event);
 		if (!event.isCancelled()) {
 			this.cooldowns.remove(ability);
+			
+			Player player = event.getPlayer();
+			int slot = player.getInventory().getHeldItemSlot() + 1;
+			String abilityName = event.getAbility();
+			BendingPlayer bPlayer = BendingPlayer.getBendingPlayer(player);
+			
+			if (bPlayer.getBoundAbility()!= null && bPlayer.getBoundAbility().equals(CoreAbility.getAbility(abilityName))) {
+				GeneralMethods.displayMovePreview(player, CoreAbility.getAbility(bPlayer.getAbilities().get(slot)));
+			}
 		}
 	}
 
@@ -735,7 +756,7 @@ public class BendingPlayer {
 	 * 
 	 * @return {@link #PLAYERS}
 	 */
-	public static ConcurrentHashMap<UUID, BendingPlayer> getPlayers() {
+	public static Map<UUID, BendingPlayer> getPlayers() {
 		return PLAYERS;
 	}
 }

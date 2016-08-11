@@ -1,18 +1,8 @@
 package com.projectkorra.projectkorra.waterbending;
 
-import com.projectkorra.projectkorra.GeneralMethods;
-import com.projectkorra.projectkorra.ProjectKorra;
-import com.projectkorra.projectkorra.ability.ComboAbility;
-import com.projectkorra.projectkorra.ability.WaterAbility;
-import com.projectkorra.projectkorra.ability.util.ComboManager.AbilityInformation;
-import com.projectkorra.projectkorra.avatar.AvatarState;
-import com.projectkorra.projectkorra.firebending.FireCombo;
-import com.projectkorra.projectkorra.firebending.FireCombo.FireComboStream;
-import com.projectkorra.projectkorra.util.BlockSource;
-import com.projectkorra.projectkorra.util.ClickType;
-import com.projectkorra.projectkorra.util.DamageHandler;
-import com.projectkorra.projectkorra.util.ParticleEffect;
-import com.projectkorra.projectkorra.util.TempBlock;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -23,16 +13,26 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.concurrent.ConcurrentHashMap;
+import com.projectkorra.projectkorra.GeneralMethods;
+import com.projectkorra.projectkorra.ProjectKorra;
+import com.projectkorra.projectkorra.ability.ComboAbility;
+import com.projectkorra.projectkorra.ability.IceAbility;
+import com.projectkorra.projectkorra.ability.util.ComboManager.AbilityInformation;
+import com.projectkorra.projectkorra.avatar.AvatarState;
+import com.projectkorra.projectkorra.firebending.FireCombo;
+import com.projectkorra.projectkorra.firebending.FireCombo.FireComboStream;
+import com.projectkorra.projectkorra.util.BlockSource;
+import com.projectkorra.projectkorra.util.ClickType;
+import com.projectkorra.projectkorra.util.DamageHandler;
+import com.projectkorra.projectkorra.util.ParticleEffect;
+import com.projectkorra.projectkorra.util.TempBlock;
 
 /*
  * TODO: Combo classes should eventually be rewritten so that each combo is treated
  * as an individual ability. In the mean time, we will just place "fake"
  * classes so that CoreAbility will register each ability. 
  */
-public class WaterCombo extends WaterAbility implements ComboAbility {
+public class WaterCombo extends IceAbility implements ComboAbility {
 
 	public static enum AbilityState {
 		ICE_PILLAR_RISING, ICE_BULLET_FORMING
@@ -305,6 +305,7 @@ public class WaterCombo extends WaterAbility implements ComboAbility {
 		if (waterGrabber != null) {
 			waterGrabber.remove();
 		}
+		bPlayer.addCooldown(this);
 	}
 
 	public void revertBlocks() {

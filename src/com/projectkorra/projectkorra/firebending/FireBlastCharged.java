@@ -70,16 +70,18 @@ public class FireBlastCharged extends FireAbility {
 		
 		if (isDay(player.getWorld())) {
 			this.chargeTime = (long) (chargeTime / getDayFactor());
+			this.maxDamage = getDayFactor(maxDamage);
+			this.range = getDayFactor(range);
 		}
 		if (bPlayer.isAvatarState()) {
 			this.chargeTime = 0;
 			this.maxDamage = AvatarState.getValue(maxDamage);
 		}
 		
-		this.range = getDayFactor(range);
+		
 		if (!player.getEyeLocation().getBlock().isLiquid()) {
 			start();
-		}
+		} 
 	}
 
 	public static boolean annihilateBlasts(Location location, double radius, Player source) {
@@ -156,7 +158,7 @@ public class FireBlastCharged extends FireAbility {
 		}
 		
 		if (explode) {
-			if (canDamageBlocks && explosionRadius > 0) {
+			if (canDamageBlocks && explosionRadius > 0 && canFireGrief()) {
 				explosion = player.getWorld().spawn(location, TNTPrimed.class);
 				explosion.setFuseTicks(0);
 				double yield = explosionRadius;

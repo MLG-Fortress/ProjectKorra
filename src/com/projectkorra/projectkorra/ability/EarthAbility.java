@@ -2,6 +2,7 @@ package com.projectkorra.projectkorra.ability;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.ChatColor;
@@ -24,6 +25,7 @@ import com.projectkorra.projectkorra.configuration.ConfigManager;
 import com.projectkorra.projectkorra.earthbending.EarthPassive;
 import com.projectkorra.projectkorra.earthbending.LavaFlow;
 import com.projectkorra.projectkorra.earthbending.RaiseEarth;
+import com.projectkorra.projectkorra.earthbending.SandSpout;
 import com.projectkorra.projectkorra.util.BlockSource;
 import com.projectkorra.projectkorra.util.Information;
 import com.projectkorra.projectkorra.util.ParticleEffect;
@@ -32,8 +34,8 @@ import com.projectkorra.projectkorra.util.TempBlock;
 public abstract class EarthAbility extends ElementalAbility {
 	
 	private static final HashSet<Block> PREVENT_EARTHBENDING = new HashSet<Block>();
-	private static final ConcurrentHashMap<Block, Information> MOVED_EARTH = new ConcurrentHashMap<Block, Information>();
-	private static final ConcurrentHashMap<Integer, Information> TEMP_AIR_LOCATIONS = new ConcurrentHashMap<Integer, Information>();
+	private static final Map<Block, Information> MOVED_EARTH = new ConcurrentHashMap<Block, Information>();
+	private static final Map<Integer, Information> TEMP_AIR_LOCATIONS = new ConcurrentHashMap<Integer, Information>();
 	private static final ArrayList<Block> PREVENT_PHYSICS = new ArrayList<Block>();
 
 	public EarthAbility(Player player) {
@@ -352,7 +354,7 @@ public abstract class EarthAbility extends ElementalAbility {
 		return value * getConfig().getDouble("Properties.Earth.MetalPowerFactor");
 	}
 	
-	public static ConcurrentHashMap<Block, Information> getMovedEarth() {
+	public static Map<Block, Information> getMovedEarth() {
 		return MOVED_EARTH;
 	}
 	
@@ -403,7 +405,7 @@ public abstract class EarthAbility extends ElementalAbility {
 		return player.getTargetBlock(getTransparentMaterialSet(), range);
 	}
 	
-	public static ConcurrentHashMap<Integer, Information> getTempAirLocations() {
+	public static Map<Integer, Information> getTempAirLocations() {
 		return TEMP_AIR_LOCATIONS;
 	}
 
@@ -431,7 +433,7 @@ public abstract class EarthAbility extends ElementalAbility {
 		byte full = 0x0;
 		if (TempBlock.isTempBlock(block)) {
 			TempBlock tblock = TempBlock.instances.get(block);
-			if (tblock == null || !LavaFlow.getTempLavaBlocks().contains(tblock)) {
+			if (tblock == null || !LavaFlow.getTempLavaBlocks().values().contains(tblock)) {
 				return false;
 			}
 		}
@@ -609,7 +611,7 @@ public abstract class EarthAbility extends ElementalAbility {
 			MOVED_EARTH.remove(block);
 		}
 		return true;
-	}
+	} 
 	
 	public static void stopBending() {
 		EarthPassive.removeAll();
@@ -617,5 +619,12 @@ public abstract class EarthAbility extends ElementalAbility {
 		if (isEarthRevertOn()) {
 			removeAllEarthbendedBlocks();
 		}
+	}
+
+	public static void removeSandSpouts(Location loc, double radius, Player source) {
+		SandSpout.removeSpouts(loc, radius, source);
+	}
+	public static void removeSandSpouts(Location loc, Player source) {
+		removeSandSpouts(loc, 1.5, source);
 	}
 }

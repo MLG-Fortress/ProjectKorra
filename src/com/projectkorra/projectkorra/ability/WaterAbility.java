@@ -6,6 +6,7 @@ import com.projectkorra.projectkorra.GeneralMethods;
 import com.projectkorra.projectkorra.util.BlockSource;
 import com.projectkorra.projectkorra.util.TempBlock;
 import com.projectkorra.projectkorra.waterbending.PhaseChangeFreeze;
+import com.projectkorra.projectkorra.waterbending.PhaseChangeMelt;
 import com.projectkorra.projectkorra.waterbending.SurgeWall;
 import com.projectkorra.projectkorra.waterbending.SurgeWave;
 import com.projectkorra.projectkorra.waterbending.WaterArms;
@@ -198,7 +199,7 @@ public abstract class WaterAbility extends ElementalAbility {
 		
 		for (double i = 0; i <= range; i++) {
 			Block block = location.clone().add(vector.clone().multiply(i)).getBlock();
-			if (!isTransparent(player, block) || GeneralMethods.isRegionProtectedFromBuild(player, "WaterManipulation", location)) {
+			if ((!isTransparent(player, block) && !isIce(block)) || GeneralMethods.isRegionProtectedFromBuild(player, "WaterManipulation", location)) {
 				continue;
 			} else if (isWaterbendable(player, null, block) && (!isPlant(block) || plantbending)) {
 				if (TempBlock.isTempBlock(block)) {
@@ -322,6 +323,7 @@ public abstract class WaterAbility extends ElementalAbility {
 	
 	public static void stopBending() {
 		PhaseChangeFreeze.removeAllCleanup();
+		PhaseChangeMelt.removeAllCleanup();
 		SurgeWall.removeAllCleanup();
 		SurgeWave.removeAllCleanup();
 		WaterArms.removeAllCleanup();

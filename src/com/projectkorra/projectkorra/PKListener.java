@@ -336,7 +336,7 @@ public class PKListener implements Listener {
 			} else if (element != null) {
 				prefix = element.getPrefix();
 			} else {
-				prefix = ChatColor.WHITE + "[Nonbender] ";
+				prefix = ChatColor.WHITE + ChatColor.translateAlternateColorCodes('&', ConfigManager.languageConfig.get().getString("Chat.Prefixes.Nonbender")) + " ";
 			}
 			player.setDisplayName(player.getName());
 			player.setDisplayName(prefix + ChatColor.RESET + player.getDisplayName());
@@ -704,12 +704,20 @@ public class PKListener implements Listener {
 	public void onPlayerChat(AsyncPlayerChatEvent event) {
 		if (event.isCancelled()) {
 			return;
-		} else if (!ConfigManager.languageConfig.get().getBoolean("Chat.Enable")) {
-			return;
-		}
-
+		} 
+		
 		Player player = event.getPlayer();
 		BendingPlayer bPlayer = BendingPlayer.getBendingPlayer(player);
+		
+		String e = bPlayer == null || bPlayer.getElements().size() == 0 ? "Nonbender" : (bPlayer.getElements().size() > 1 ? "Avatar" : bPlayer.getElements().get(0).getName());
+		String element = ConfigManager.languageConfig.get().getString("Chat.Prefixes." + e);
+		ChatColor c = bPlayer == null || bPlayer.getElements().size() == 0 ? ChatColor.WHITE : (bPlayer.getElements().size() > 1 ? Element.AVATAR.getColor() : bPlayer.getElements().get(0).getColor());
+		event.setFormat(event.getFormat().replace("{element}", c + element + ChatColor.RESET).replace("{ELEMENT}", c + element + ChatColor.RESET).replace("{elementcolor}", c + "").replace("{ELEMENTCOLOR}", c + ""));
+		
+		if (!ConfigManager.languageConfig.get().getBoolean("Chat.Enable")) {
+			return;
+		}
+		
 		ChatColor color = ChatColor.WHITE;
 
 		if (bPlayer == null) {
@@ -719,9 +727,9 @@ public class PKListener implements Listener {
 		if (player.hasPermission("bending.avatar") || bPlayer.getElements().size() > 1) {
 			color = ChatColor.valueOf(ConfigManager.languageConfig.get().getString("Chat.Colors.Avatar"));
 		} else {
-			for (Element element : Element.getMainElements()) {
-				if (bPlayer.hasElement(element)) {
-					color = element.getColor();
+			for (Element element_ : Element.getMainElements()) {
+				if (bPlayer.hasElement(element_)) {
+					color = element_.getColor();
 					break;
 				}
 			}
@@ -871,73 +879,81 @@ public class PKListener implements Listener {
 		if (!(event.getEntity() instanceof Player)) {
 			return;
 		}
-
+		
 		Player player = event.getEntity();
 		EarthArmor earthArmor = CoreAbility.getAbility(player, EarthArmor.class);
 		PlantArmor plantArmor = CoreAbility.getAbility(player, PlantArmor.class);
-
-		if (earthArmor != null) {
-			List<ItemStack> drops = event.getDrops();
-			List<ItemStack> newDrops = new ArrayList<ItemStack>();
-			for (int i = 0; i < drops.size(); i++) {
-				Material type = drops.get(i).getType();
-				if (!(type == Material.LEATHER_BOOTS || type == Material.LEATHER_CHESTPLATE || type == Material.LEATHER_HELMET || type == Material.LEATHER_LEGGINGS || type == Material.AIR)) {
-					newDrops.add(drops.get(i));
-				}
+		
+		if (event.getKeepInventory()) {
+			if (earthArmor != null && earthArmor.getOldArmor() != null) {
+				player.getInventory().setArmorContents(earthArmor.getOldArmor());
+			} else if (plantArmor != null && plantArmor.getOldArmor() != null) {
+				player.getInventory().setArmorContents(plantArmor.getOldArmor());
+			} else if (event.getEntity() instanceof LivingEntity && MetalClips.isControlled(event.getEntity()) && MetalClips.getOriginalArmor(player) != null) {
+				player.getInventory().setArmorContents(MetalClips.getOriginalArmor(player));
 			}
-			if (earthArmor.getOldArmor() != null) {
-				for (ItemStack is : earthArmor.getOldArmor()) {
-					if (is.getType() != Material.AIR) {
-						newDrops.add(is);
+		} else {
+			if (earthArmor != null) {
+				List<Material> earthArmorItems = Arrays.asList(new Material[] {Material.LEATHER_BOOTS, Material.LEATHER_LEGGINGS, Material.LEATHER_CHESTPLATE, Material.LEATHER_HELMET});
+				List<ItemStack> newDrops = new ArrayList<ItemStack>();
+				if (earthArmor.getOldArmor() != null) {
+					int size = event.getDrops().size();
+					for (int i = 0; i < 4; i++) {
+						//Armor always drops last (items, boots, leggings, chestplate, helmet) so we got to get the last drop items
+						ItemStack is = event.getDrops().get(size - i - 1); 
+						if (earthArmorItems.contains(is.getType())) {
+							event.getDrops().remove(is);
+							newDrops.add(earthArmor.getOldArmor()[i]);
+						}
 					}
 				}
+				event.getDrops().addAll(newDrops);
+				earthArmor.remove();
 			}
-			event.getDrops().clear();
-			event.getDrops().addAll(newDrops);
-			earthArmor.remove();
-		}
 
-		if (plantArmor != null) {
-			List<ItemStack> drops = event.getDrops();
-			List<ItemStack> newDrops = new ArrayList<>();
-
-			for (int i = 0; i < drops.size(); i++) {
-				Material type = drops.get(i).getType();
-				if (!(type == Material.LEATHER_BOOTS || type == Material.LEATHER_CHESTPLATE || type == Material.LEAVES || type == Material.LEAVES_2 || type == Material.LEATHER_LEGGINGS || type == Material.AIR)) {
-					newDrops.add(drops.get(i));
-				}
-			}
-			if (plantArmor.getOldArmor() != null) {
-				for (ItemStack is : plantArmor.getOldArmor()) {
-					if (!(is.getType() == Material.AIR)) {
-						newDrops.add(is);
+			if (plantArmor != null) {
+				List<Material> plantArmorItems = Arrays.asList(new Material[] {Material.LEATHER_BOOTS, Material.LEATHER_LEGGINGS, Material.LEATHER_CHESTPLATE, Material.LEAVES});
+				List<ItemStack> newDrops = new ArrayList<ItemStack>();
+				if (plantArmor.getOldArmor() != null) {
+					int size = event.getDrops().size();
+					for (int i = 0; i < 4; i++) {
+						ItemStack is = event.getDrops().get(size - i - 1); 
+						if (plantArmorItems.contains(is.getType())) {
+							event.getDrops().remove(is);
+							newDrops.add(plantArmor.getOldArmor()[i]);
+						}
 					}
 				}
+
+				event.getDrops().addAll(newDrops);
+				plantArmor.remove();
 			}
 
-			event.getDrops().clear();
-			event.getDrops().addAll(newDrops);
-			plantArmor.remove();
-		}
-
-		if (MetalClips.getEntityClipsCount().containsKey(event.getEntity())) {
-			List<ItemStack> drops = event.getDrops();
-			List<ItemStack> newdrops = new ArrayList<ItemStack>();
-			for (int i = 0; i < drops.size(); i++) {
-				if (!(drops.get(i).getType() == Material.IRON_HELMET || drops.get(i).getType() == Material.IRON_CHESTPLATE || drops.get(i).getType() == Material.IRON_LEGGINGS || drops.get(i).getType() == Material.IRON_BOOTS || drops.get(i).getType() == Material.AIR)) {
-					newdrops.add(drops.get(i));
+			if (event.getEntity() instanceof LivingEntity && MetalClips.isControlled(event.getEntity())) {
+				
+				List<ItemStack> currentArmor = new ArrayList<ItemStack>();
+				for (ItemStack is : Arrays.asList(event.getEntity().getInventory().getArmorContents())) {
+					if (is.getType() != Material.AIR) { //Remove Air because it won't show in the drops
+						currentArmor.add(is);
+					}
 				}
+				
+				List<ItemStack> oldArmor = new ArrayList<ItemStack>();
+				for (ItemStack is : Arrays.asList(MetalClips.getOriginalArmor(player))) {
+					if (is.getType() != Material.AIR) { //Shouldn't add air itemstacks to drop list 
+						oldArmor.add(is);
+					}
+				}
+				
+				for (int i = 0; i < currentArmor.size(); i++) { //Remove all armor drops completely, so we can then drop the correct armor.
+					event.getDrops().remove(event.getDrops().size() - 1);
+				}
+				
+				event.getDrops().addAll(oldArmor);
+				MetalClips.getEntityClipsCount().remove(event.getEntity());
 			}
-
-			newdrops.add(MetalClips.getOriginalHelmet(event.getEntity()));
-			newdrops.add(MetalClips.getOriginalChestplate(event.getEntity()));
-			newdrops.add(MetalClips.getOriginalLeggings(event.getEntity()));
-			newdrops.add(MetalClips.getOriginalBoots(event.getEntity()));
-
-			event.getDrops().clear();
-			event.getDrops().addAll(newdrops);
-			MetalClips.getEntityClipsCount().remove(event.getEntity());
 		}
+
 
 		if (event.getEntity().getKiller() != null) {
 			if (BENDING_PLAYER_DEATH.containsKey(event.getEntity())) {
@@ -1029,11 +1045,17 @@ public class PKListener implements Listener {
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		Player player = event.getPlayer();
+		final Player player = event.getPlayer();
 		JUMPS.put(player, player.getStatistic(Statistic.JUMP));
 
 		GeneralMethods.createBendingPlayer(player.getUniqueId(), player.getName());
-		GeneralMethods.removeUnusableAbilities(player.getName());
+		Bukkit.getScheduler().runTaskLater(ProjectKorra.plugin, new Runnable() {
+
+			@Override
+			public void run() {
+				GeneralMethods.removeUnusableAbilities(player.getName());
+			}
+		}, 5);
 	}
 
 	@EventHandler
@@ -1041,6 +1063,7 @@ public class PKListener implements Listener {
 		if (event.isCancelled()) {
 			return;
 		}
+		
 		AirFlight.remove(event.getPlayer());
 		JUMPS.remove(event.getPlayer());
 	}
@@ -1176,6 +1199,10 @@ public class PKListener implements Listener {
 		}
 		if (metalClips != null) {
 			metalClips.remove();
+		}
+		
+		if (MetalClips.isControlled(event.getPlayer())) {
+			MetalClips.removeControlledEnitity(event.getPlayer());
 		}
 
 		MultiAbilityManager.remove(player);
@@ -1380,7 +1407,11 @@ public class PKListener implements Listener {
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerSlotChange(PlayerItemHeldEvent event) {
 		Player player = event.getPlayer();
-
+		BendingPlayer bPlayer = BendingPlayer.getBendingPlayer(player);
+		int slot = event.getNewSlot() + 1;
+		
+		GeneralMethods.displayMovePreview(player, CoreAbility.getAbility(bPlayer.getAbilities().get(slot)));
+		
 		WaterArms waterArms = CoreAbility.getAbility(player, WaterArms.class);
 		if (waterArms != null) {
 			waterArms.displayBoundMsg(event.getNewSlot() + 1);
@@ -1681,5 +1712,4 @@ public class PKListener implements Listener {
 	public static Map<Player, Integer> getJumpStatistics() {
 		return JUMPS;
 	}
-
 }

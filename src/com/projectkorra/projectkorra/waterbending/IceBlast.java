@@ -63,7 +63,7 @@ public class IceBlast extends IceAbility {
 
 		block(player);
 		range = getNightFactor(range, player.getWorld());
-		Block sourceBlock = BlockSource.getWaterSourceBlock(player, range, ClickType.SHIFT_DOWN, false, true, false);
+		Block sourceBlock = BlockSource.getWaterSourceBlock(player, range, ClickType.SHIFT_DOWN, false, true, false, false, false);
 
 		if (sourceBlock == null) {
 			return;
@@ -91,10 +91,12 @@ public class IceBlast extends IceAbility {
 	}
 
 	private static void block(Player player) {
-		for (IceBlast iceBlast : getAbilities(player, IceBlast.class)) {
+		for (IceBlast iceBlast : getAbilities(IceBlast.class)) {
 			if (!iceBlast.location.getWorld().equals(player.getWorld())) {
 				continue;
 			} else if (!iceBlast.progressing) {
+				continue;
+			} else if (iceBlast.getPlayer().equals(player)) {
 				continue;
 			} else if (GeneralMethods.isRegionProtectedFromBuild(iceBlast, iceBlast.location)) {
 				continue;

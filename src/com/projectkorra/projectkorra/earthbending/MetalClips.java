@@ -1,6 +1,7 @@
 package com.projectkorra.projectkorra.earthbending;
 
 import com.projectkorra.projectkorra.GeneralMethods;
+import com.projectkorra.projectkorra.ability.CoreAbility;
 import com.projectkorra.projectkorra.ability.MetalAbility;
 import com.projectkorra.projectkorra.avatar.AvatarState;
 import com.projectkorra.projectkorra.util.DamageHandler;
@@ -19,12 +20,13 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MetalClips extends MetalAbility {
 	
-	private static final ConcurrentHashMap<Entity, Integer> ENTITY_CLIPS_COUNT = new ConcurrentHashMap<>();
-	private static final ConcurrentHashMap<Entity, MetalClips> TARGET_TO_ABILITY = new ConcurrentHashMap<>();
+	private static final Map<Entity, Integer> ENTITY_CLIPS_COUNT = new ConcurrentHashMap<>();
+	private static final Map<Entity, MetalClips> TARGET_TO_ABILITY = new ConcurrentHashMap<>();
 	private static final Material[] METAL_ITEMS = { 
 		Material.IRON_INGOT, Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, 
 		Material.IRON_BOOTS, Material.IRON_BLOCK, Material.IRON_AXE, Material.IRON_PICKAXE, 
@@ -121,6 +123,14 @@ public class MetalClips extends MetalAbility {
 		MetalClips clips = TARGET_TO_ABILITY.get(ent);
 		if (clips != null) {
 			return clips.oldArmor[0];
+		}
+		return null;
+	}
+	
+	public static ItemStack[] getOriginalArmor(LivingEntity ent) {
+		MetalClips clips = TARGET_TO_ABILITY.get(ent);
+		if (clips != null) {
+			return clips.oldArmor;
 		}
 		return null;
 	}
@@ -404,7 +414,7 @@ public class MetalClips extends MetalAbility {
 
 				for (Entity e : GeneralMethods.getEntitiesAroundPoint(ii.getLocation(), 2)) {
 					if (e instanceof LivingEntity && e.getEntityId() != player.getEntityId()) {
-						if (e instanceof Player || e instanceof Zombie || e instanceof Skeleton) {
+						if ((e instanceof Player || e instanceof Zombie || e instanceof Skeleton) && targetEntity == null) {
 							targetEntity = (LivingEntity) e;
 							TARGET_TO_ABILITY.put(targetEntity, this);
 							formArmor();
@@ -449,7 +459,7 @@ public class MetalClips extends MetalAbility {
 		}
 	}
 
-	public static boolean isControlled(Player player) {
+	public static boolean isControlled(LivingEntity player) {
 		return TARGET_TO_ABILITY.containsKey(player);
 	}
 	
@@ -458,12 +468,23 @@ public class MetalClips extends MetalAbility {
 		return clips != null && player.isSneaking() && clips.targetEntity != null;
 	}
 	
-	public static ConcurrentHashMap<Entity, Integer> getEntityClipsCount() {
+	public static Map<Entity, Integer> getEntityClipsCount() {
 		return ENTITY_CLIPS_COUNT;
 	}
 	
-	public static ConcurrentHashMap<Entity, MetalClips> getTargetToAbility() {
+	public static Map<Entity, MetalClips> getTargetToAbility() {
 		return TARGET_TO_ABILITY;
+	}
+	
+	public static boolean removeControlledEnitity(LivingEntity entity) {
+		if (entity == null) return false;
+		for (MetalClips metalclips : CoreAbility.getAbilities(MetalClips.class)) {
+			if (metalclips.targetEntity == entity) {
+				metalclips.remove();
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
