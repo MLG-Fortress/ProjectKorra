@@ -1,10 +1,10 @@
 package com.projectkorra.projectkorra.earthbending;
 
-import com.projectkorra.projectkorra.GeneralMethods;
-import com.projectkorra.projectkorra.ability.CoreAbility;
-import com.projectkorra.projectkorra.ability.MetalAbility;
-import com.projectkorra.projectkorra.avatar.AvatarState;
-import com.projectkorra.projectkorra.util.DamageHandler;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,11 +17,11 @@ import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.projectkorra.projectkorra.GeneralMethods;
+import com.projectkorra.projectkorra.ability.CoreAbility;
+import com.projectkorra.projectkorra.ability.MetalAbility;
+import com.projectkorra.projectkorra.avatar.AvatarState;
+import com.projectkorra.projectkorra.util.DamageHandler;
 
 public class MetalClips extends MetalAbility {
 	
@@ -221,10 +221,15 @@ public class MetalClips extends MetalAbility {
 
 		player.getWorld().dropItem(targetEntity.getLocation(), new ItemStack(Material.IRON_INGOT, metalClipsCount));
 		isBeingWorn = false;
+		bPlayer.addCooldown(this);
 	}
 
 	public void launch() {
 		if (!canThrow) {
+			return;
+		}
+		
+		if (targetEntity == null) {
 			return;
 		}
 
@@ -269,7 +274,7 @@ public class MetalClips extends MetalAbility {
 		if (!player.isSneaking()) {
 			isControlling = false;
 			isMagnetized = false;
-			if (metalClipsCount < 4 && hasSnuck) {
+			if (metalClipsCount < 4 && hasSnuck && abilityType == 0) {
 				launch();
 			}
 		}
@@ -455,9 +460,6 @@ public class MetalClips extends MetalAbility {
 	@Override
 	public void remove() {
 		super.remove();
-		for (Item i : trackedIngots) {
-			i.remove();
-		}
 		
 		resetArmor();
 		trackedIngots.clear();
@@ -466,10 +468,6 @@ public class MetalClips extends MetalAbility {
 		if (targetEntity != null) {
 			ENTITY_CLIPS_COUNT.remove(targetEntity);
 			TARGET_TO_ABILITY.remove(targetEntity);
-		}
-		
-		if (player != null && player.isOnline()) {
-			bPlayer.addCooldown(this);
 		}
 	}
 
