@@ -52,19 +52,6 @@ public class Updater {
 	 */
 	public Updater(Plugin plugin, String URL) {
 		this.plugin = plugin;
-		try {
-			url = new URL(URL);
-			urlc = url.openConnection();
-			urlc.setRequestProperty("User-Agent", ""); // Must be used or face 403
-			urlc.setConnectTimeout(30000); // 30 second time out, throws SocketTimeoutException
-			document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(urlc.getInputStream());
-		}
-		catch (IOException e) {
-			plugin.getLogger().info("Could not connect to ProjectKorra.com to check for updates");
-		}
-		catch (SAXException | ParserConfigurationException e) {
-			e.printStackTrace();
-		}
 		this.currentVersion = plugin.getDescription().getVersion();
 		this.pluginName = plugin.getDescription().getName();
 	}
